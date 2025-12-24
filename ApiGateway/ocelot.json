@@ -1,0 +1,64 @@
+{
+  "Routes": [
+    {
+      "UpstreamPathTemplate": "/health",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/health",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "orders-service", "Port": 8080 }
+      ]
+    },
+    {
+      "UpstreamPathTemplate": "/orders",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamPathTemplate": "/orders",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "orders-service", "Port": 8080 }
+      ]
+    },
+    {
+      "UpstreamPathTemplate": "/orders/{id}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/orders/{id}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "orders-service", "Port": 8080 }
+      ]
+    },
+    {
+      "UpstreamPathTemplate": "/accounts",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/accounts",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "payments-service", "Port": 8080 }
+      ]
+    },
+    {
+      "UpstreamPathTemplate": "/accounts/{userId}/topup",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamPathTemplate": "/accounts/{userId}/topup",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "payments-service", "Port": 8080 }
+      ]
+    },
+    {
+      "UpstreamPathTemplate": "/accounts/{userId}/balance",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/accounts/{userId}/balance",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        { "Host": "payments-service", "Port": 8080 }
+      ]
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:8080",
+    "DownstreamHeaderTransformations": {
+      "User-Id": "{user_id}"
+    }
+  }
+}

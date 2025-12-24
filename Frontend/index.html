@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Gozon Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            <i class="bi bi-shop"></i> Gozon Shop
+        </a>
+        <div id="user-info" class="text-white"></div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div id="step1" class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-person-circle"></i> Введите ваш ID</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">User ID (будет сохранен в localStorage):</label>
+                <input type="text" id="userId" class="form-control" placeholder="Например: 550e8400-e29b-41d4-a716-446655440000">
+                <div class="form-text">Можно ввести существующий ID или создать новый</div>
+            </div>
+            <button onclick="setUserId()" class="btn btn-primary">
+                <i class="bi bi-check-circle"></i> Продолжить
+            </button>
+        </div>
+    </div>
+
+    <div id="main-interface" style="display: none;">
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-wallet2"></i> Ваш счет</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h6>Баланс:</h6>
+                            <h3 id="balance" class="text-success">0 ₽</h3>
+                        </div>
+
+                        <div class="mb-3">
+                            <button onclick="createAccount()" class="btn btn-outline-primary btn-sm w-100 mb-2">
+                                <i class="bi bi-plus-circle"></i> Создать счет
+                            </button>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Пополнить счет:</label>
+                            <div class="input-group">
+                                <input type="number" id="topupAmount" class="form-control" placeholder="Сумма" value="1000">
+                                <button onclick="topUpAccount()" class="btn btn-success">
+                                    <i class="bi bi-cash-coin"></i> Пополнить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-cart"></i> Создать заказ</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Сумма заказа:</label>
+                                <input type="number" id="orderAmount" class="form-control" value="1000">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Описание:</label>
+                                <input type="text" id="orderDescription" class="form-control" placeholder="Например: Ноутбук">
+                            </div>
+                        </div>
+                        <button onclick="createOrder()" class="btn btn-primary mt-3 w-100">
+                            <i class="bi bi-bag-plus"></i> Создать заказ
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-list-check"></i> Ваши заказы</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Сумма</th>
+                                    <th>Описание</th>
+                                    <th>Статус</th>
+                                    <th>Дата</th>
+                                </tr>
+                                </thead>
+                                <tbody id="orders-list">
+                                </tbody>
+                            </table>
+                        </div>
+                        <button onclick="refreshOrders()" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-clockwise"></i> Обновить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script src="script.js"></script>
+</body>
+</html>

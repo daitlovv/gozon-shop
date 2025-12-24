@@ -1,0 +1,1212 @@
+{
+  "info": {
+    "_postman_id": "gozon-flow",
+    "name": "Полный набор тестов",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Успешная оплата",
+      "item": [
+        {
+          "name": "1. Создание нового пользователя",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const userId = pm.variables.replaceIn('{{$guid}}');",
+                  "pm.variables.set('test_user', userId);",
+                  "console.log('Создан новый пользователь:', userId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user_id",
+                "value": "{{test_user}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/accounts",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["accounts"]
+            }
+          }
+        },
+        {
+          "name": "2. Пополнение счета",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 5000\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/accounts/{{test_user}}/topup",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["accounts", "{{test_user}}", "topup"]
+            }
+          }
+        },
+        {
+          "name": "3. Проверка баланса (должно быть 5000)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Баланс равен 5000', function() {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.balance).to.equal(5000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/accounts/{{test_user}}/balance",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["accounts", "{{test_user}}", "balance"]
+            }
+          }
+        },
+        {
+          "name": "4. Создание заказа",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Заказ успешно создан', function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('order_id');",
+                  "    pm.variables.set('order_id', json.order_id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user_id",
+                "value": "{{test_user}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1000,\n  \"description\": \"Успешный заказ\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "5. Ожидание обработки платежа (10 секунд)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.log('Ожидание обработки платежа');",
+                  "setTimeout(() => {}, 10000);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/orders/{{order_id}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["orders", "{{order_id}}"]
+            }
+          }
+        },
+        {
+          "name": "6. Проверка статуса заказа (должен быть FINISHED)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус заказа FINISHED', function() {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "    const json = pm.response.json();",
+                  "    console.log('Статус заказа:', json.status);",
+                  "    pm.expect(json.status).to.equal('Finished');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/orders/{{order_id}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["orders", "{{order_id}}"]
+            }
+          }
+        },
+        {
+          "name": "7. Проверка баланса после оплаты (должен быть 4000)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Баланс после оплаты равен 4000', function() {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "    const json = pm.response.json();",
+                  "    console.log('Баланс:', json.balance);",
+                  "    pm.expect(json.balance).to.equal(4000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/accounts/{{test_user}}/balance",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["accounts", "{{test_user}}", "balance"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Интенсивное использование",
+      "item": [
+        {
+          "name": "1. Создание пользователя",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const userId = pm.variables.replaceIn('{{$guid}}');",
+                  "pm.variables.set('intense_user', userId);",
+                  "console.log('Пользователь для интенсивного теста:', userId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user_id",
+                "value": "{{intense_user}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/accounts",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["accounts"]
+            }
+          }
+        },
+        {
+          "name": "2. Пополнение на 3000",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 3000\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/accounts/{{intense_user}}/topup",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["accounts", "{{intense_user}}", "topup"]
+            }
+          }
+        },
+        {
+          "name": "3. Заказ на 500 (ожидание 3 сек)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.log('Создание заказа на 500');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.order_id) {",
+                  "    console.log('Заказ создан:', json.order_id);",
+                  "    pm.variables.set('order_500', json.order_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user_id",
+                "value": "{{intense_user}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500,\n  \"description\": \"Заказ на 500\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "4. Заказ на 800 (ожидание 3 сек)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.log('Создание заказа на 800');",
+                  "setTimeout(() => {}, 3000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.order_id) {",
+                  "    console.log('Заказ создан:', json.order_id);",
+                  "    pm.variables.set('order_800', json.order_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user_id",
+                "value": "{{intense_user}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 800,\n  \"description\": \"Заказ на 800\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "5. Заказ на 2000 (ожидание 3 сек)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.log('Создание заказа на 2000');",
+                  "setTimeout(() => {}, 3000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.order_id) {",
+                  "    console.log('Заказ создан:', json.order_id);",
+                  "    pm.variables.set('order_2000', json.order_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user_id",
+                "value": "{{intense_user}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 2000,\n  \"description\": \"Заказ на 2000\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "6. Заказ на 1500 (ожидание 3 сек)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.log('Создание заказа на 1500');",
+                  "setTimeout(() => {}, 3000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.order_id) {",
+                  "    console.log('Заказ создан:', json.order_id);",
+                  "    pm.variables.set('order_1500', json.order_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user_id",
+                "value": "{{intense_user}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1500,\n  \"description\": \"Заказ на 1500\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "7. Заказ на 10000 (ожидание 3 сек)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.log('Создание заказа на 10000');",
+                  "setTimeout(() => {}, 3000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.order_id) {",
+                  "    console.log('Заказ создан:', json.order_id);",
+                  "    pm.variables.set('order_10000', json.order_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user_id",
+                "value": "{{intense_user}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 10000,\n  \"description\": \"Заказ на 10000\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "8. Заказ на 200 (ожидание 3 сек)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.log('Создание заказа на 200');",
+                  "setTimeout(() => {}, 3000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.order_id) {",
+                  "    console.log('Заказ создан:', json.order_id);",
+                  "    pm.variables.set('order_200', json.order_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user_id",
+                "value": "{{intense_user}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 200,\n  \"description\": \"Заказ на 200\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "9. Заказ на 3200 (ожидание 3 сек)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.log('Создание заказа на 3200');",
+                  "setTimeout(() => {}, 3000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.order_id) {",
+                  "    console.log('Заказ создан:', json.order_id);",
+                  "    pm.variables.set('order_3200', json.order_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user_id",
+                "value": "{{intense_user}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 3200,\n  \"description\": \"Заказ на 3200\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "10. Заказ на 802020 (ожидание 3 сек)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.log('Создание заказа на 802020');",
+                  "setTimeout(() => {}, 3000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.order_id) {",
+                  "    console.log('Заказ создан:', json.order_id);",
+                  "    pm.variables.set('order_802020', json.order_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user_id",
+                "value": "{{intense_user}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 802020,\n  \"description\": \"Заказ на 802020\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "11. Пополнение на 5000",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.log('Пополнение счета на 5000');",
+                  "setTimeout(() => {}, 3000);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 5000\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/accounts/{{intense_user}}/topup",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["accounts", "{{intense_user}}", "topup"]
+            }
+          }
+        },
+        {
+          "name": "12. Заказ на 4000 (ожидание 3 сек)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.log('Создание заказа на 4000');",
+                  "setTimeout(() => {}, 3000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.order_id) {",
+                  "    console.log('Заказ создан:', json.order_id);",
+                  "    pm.variables.set('order_4000', json.order_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user_id",
+                "value": "{{intense_user}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 4000,\n  \"description\": \"Заказ на 4000\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "13. Заказ на 100 (ожидание 3 сек)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.log('Создание заказа на 100');",
+                  "setTimeout(() => {}, 3000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.order_id) {",
+                  "    console.log('Заказ создан:', json.order_id);",
+                  "    pm.variables.set('order_100', json.order_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user_id",
+                "value": "{{intense_user}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 100,\n  \"description\": \"Заказ на 100\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "14. Заказ на 3 (ожидание 3 сек)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.log('Создание заказа на 3');",
+                  "setTimeout(() => {}, 3000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.order_id) {",
+                  "    console.log('Заказ создан:', json.order_id);",
+                  "    pm.variables.set('order_3', json.order_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user_id",
+                "value": "{{intense_user}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 3,\n  \"description\": \"Заказ на 3\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "15. Итоговая проверка баланса (ожидание 10 сек)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.log('Ожидание окончания обработки всех платежей');",
+                  "setTimeout(() => {}, 10000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Финальная проверка баланса', function() {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "    const json = pm.response.json();",
+                  "    console.log('Финальный баланс:', json.balance);",
+                  "    pm.expect(json.balance).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/accounts/{{intense_user}}/balance",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["accounts", "{{intense_user}}", "balance"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Тестовые кейсы",
+      "item": [
+        {
+          "name": "Недостаточно средств",
+          "item": [
+            {
+              "name": "1. Создание пользователя с малым балансом",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const userId = pm.variables.replaceIn('{{$guid}}');",
+                      "pm.variables.set('poor_user', userId);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "user_id",
+                    "value": "{{poor_user}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/accounts",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["accounts"]
+                }
+              }
+            },
+            {
+              "name": "2. Пополнение счета на 500",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": 500\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/accounts/{{poor_user}}/topup",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["accounts", "{{poor_user}}", "topup"]
+                }
+              }
+            },
+            {
+              "name": "3. Создание заказа на 1000 (недостаточно средств)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const json = pm.response.json();",
+                      "if (json.order_id) {",
+                      "    pm.variables.set('poor_order_id', json.order_id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "user_id",
+                    "value": "{{poor_user}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": 1000,\n  \"description\": \"Недостаточно средств\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/orders",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["orders"]
+                }
+              }
+            },
+            {
+              "name": "4. Ожидание и проверка статуса (должен быть Cancelled)",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "console.log('Ожидание 15 секунд для обработки платежа');",
+                      "setTimeout(() => {}, 15000);"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Статус заказа CancelledD', function() {",
+                      "    const json = pm.response.json();",
+                      "    pm.expect(json.status).to.equal('Cancelled');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/orders/{{poor_order_id}}",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["orders", "{{poor_order_id}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Пользователь без счета",
+          "item": [
+            {
+              "name": "1. Генерация пользователя без счета",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const userId = pm.variables.replaceIn('{{$guid}}');",
+                      "pm.variables.set('no_account_user', userId);",
+                      "console.log('Пользователь без счета:', userId);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/accounts/{{no_account_user}}/balance",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["accounts", "{{no_account_user}}", "balance"]
+                }
+              }
+            },
+            {
+              "name": "2. Создание заказа (должен завершиться статусом Cancelled)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const json = pm.response.json();",
+                      "if (json.order_id) {",
+                      "    pm.variables.set('no_account_order_id', json.order_id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "user_id",
+                    "value": "{{no_account_user}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": 100,\n  \"description\": \"Пользователь без счета\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/orders",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["orders"]
+                }
+              }
+            },
+            {
+              "name": "3. Проверка статуса (должен быть Cancelled)",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "console.log('Ожидание 15 секунд для обработки платежа');",
+                      "setTimeout(() => {}, 15000);"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Статус заказа Cancelled', function() {",
+                      "    const json = pm.response.json();",
+                      "    pm.expect(json.status).to.equal('Cancelled');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/orders/{{no_account_order_id}}",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["orders", "{{no_account_order_id}}"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": []
+}

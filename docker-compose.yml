@@ -1,0 +1,78 @@
+﻿services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  orders-db:
+    image: postgres:15
+    container_name: orders-db
+    environment:
+      POSTGRES_DB: orders
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+
+  payments-db:
+    image: postgres:15
+    container_name: payments-db
+    environment:
+      POSTGRES_DB: payments
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+
+  orders-service:
+    build: ./OrdersService
+    container_name: orders-service
+    depends_on:
+      - orders-db
+      - rabbitmq
+    environment:
+      ConnectionStrings__db: Host=orders-db;Database=orders;Username=postgres;Password=postgres
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Port: 5672
+      RabbitMq__Username: guest
+      RabbitMq__Password: guest
+      ASPNETCORE_URLS: http://+:8080
+    ports:
+      - "5001:8080"
+
+  payments-service:
+    build: ./PaymentsService
+    container_name: payments-service
+    depends_on:
+      - payments-db
+      - rabbitmq
+    environment:
+      ConnectionStrings__db: Host=payments-db;Database=payments;Username=postgres;Password=postgres
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Port: 5672
+      RabbitMq__Username: guest
+      RabbitMq__Password: guest
+      ASPNETCORE_URLS: http://+:8080
+    ports:
+      - "5002:8080"
+
+  api-gateway:
+    build: ./ApiGateway
+    container_name: api-gateway
+    depends_on:
+      - orders-service
+      - payments-service
+    ports:
+      - "8080:8080"
+    
+  frontend:
+    build: ./Frontend
+    container_name: gozon-frontend
+    depends_on:
+      - api-gateway
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production

@@ -1,0 +1,13 @@
+{
+  "name": "gozon-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for Gozon Shop",
+  "scripts": {
+    "dev": "python3 -m http.server 8000",
+    "build": "echo 'No build step required for static files'"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.0",
+    "toastify-js": "^1.12.0"
+  }
+}
